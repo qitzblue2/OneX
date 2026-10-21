@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "npccoach",
+  "version": "${version}",
+  "name": "NPC Coach",
+  "description": "Fight an AI-powered NPC coach that analyzes your fights and helps you improve.",
+  "authors": ["OneX"],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["dev.onex.npccoach.NpcCoachMod"],
+    "client": ["dev.onex.npccoach.client.NpcCoachClient"]
+  },
+  "mixins": ["npccoach.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
