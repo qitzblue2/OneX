@@ -2,5 +2,5 @@
   "entity.npccoach.coach": "Coach",
   "item.npccoach.coach_spawn_egg": "Coach Spawn Egg",
   "key.npccoach.menu": "Open Coach Menu",
-  "category.npccoach": "NPC Coach"
+  "key.category.npccoach.main": "NPC Coach"
 }

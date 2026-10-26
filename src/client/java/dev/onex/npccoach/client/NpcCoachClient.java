@@ -10,6 +10,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 public class NpcCoachClient implements ClientModInitializer {
@@ -18,7 +19,7 @@ public class NpcCoachClient implements ClientModInitializer {
         EntityRendererRegistry.register(NpcCoachMod.COACH, CoachRenderer::new);
 
         KeyBinding menuKey = KeyBindingHelper.registerKeyBinding(
-                new KeyBinding("key.npccoach.menu", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_K, "category.npccoach"));
+                new KeyBinding("key.npccoach.menu", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_K, KeyBinding.Category.create(Identifier.of("npccoach", "main"))));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (menuKey.wasPressed()) {
                 if (client.player != null) ClientPlayNetworking.send(new CoachActionC2S("open", -1, ""));

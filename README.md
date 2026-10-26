@@ -1,4 +1,4 @@
-# NPC Coach (Fabric 1.21.1)
+# NPC Coach (Fabric 1.21.11)
 
 Fight an AI coach NPC in survival. After every fight the coach looks at your stats (accuracy, crits,
 combos, strafing, damage, shield use...), tells you what to improve, answers your questions, and can
@@ -41,4 +41,4 @@ coach still gives a rule-based report. Models can be changed in the config (`gro
 `/npccoach menu | start [drill] | ask <question> | stop | status | key <keys>` (key needs op).
 
 ## Build
-`./gradlew build` → `build/libs/npc-coach-0.1.0.jar`. Install it with Fabric API on client and server.
+`./gradlew build` → `build/libs/npc-coach-0.1.0.jar`. Install it with Fabric API (0.141+ for 1.21.11) on client and server.

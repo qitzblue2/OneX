@@ -9,6 +9,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.CyclingButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.StringVisitable;
 import net.minecraft.text.Style;
@@ -52,9 +53,8 @@ public class CoachMenuScreen extends Screen {
         int y = 28;
         addDrawableChild(ButtonWidget.builder(Text.literal("Start Fight"), b -> start(Drill.NORMAL))
                 .dimensions(x, y, 100, 20).build());
-        addDrawableChild(CyclingButtonWidget.<Drill>builder(d -> Text.literal(d.displayName))
+        addDrawableChild(CyclingButtonWidget.<Drill>builder(d -> Text.literal(d.displayName), selectedDrill)
                 .values(Drill.values())
-                .initially(selectedDrill)
                 .build(x + 104, y, 112, 20, Text.literal("Drill"), (button, value) -> selectedDrill = value));
         addDrawableChild(ButtonWidget.builder(Text.literal("Start Drill"), b -> start(selectedDrill))
                 .dimensions(x + 220, y, 100, 20).build());
@@ -76,7 +76,7 @@ public class CoachMenuScreen extends Screen {
             keyField = new TextFieldWidget(textRenderer, x, bottom + 24, 266, 20, Text.literal("NPC-API-KEY"));
             keyField.setMaxLength(2048);
             keyField.setPlaceholder(Text.literal("NPC-API-KEY (keys separated by commas)"));
-            keyField.setRenderTextProvider((text, index) -> OrderedText.styledForwardsVisitedString("*".repeat(text.length()), Style.EMPTY));
+            keyField.addFormatter((text, index) -> OrderedText.styledForwardsVisitedString("*".repeat(text.length()), Style.EMPTY));
             addDrawableChild(keyField);
             addDrawableChild(ButtonWidget.builder(Text.literal("Save"), b -> saveKey()).dimensions(x + 270, bottom + 24, 50, 20).build());
         }
@@ -122,12 +122,12 @@ public class CoachMenuScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == 257 && askField.isFocused()) { // Enter
+    public boolean keyPressed(KeyInput input) {
+        if (input.key() == 257 && askField.isFocused()) { // Enter
             ask();
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(input);
     }
 
     @Override
@@ -140,17 +140,17 @@ public class CoachMenuScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
         int x = left();
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal("Coach").styled(s -> s.withBold(true)), width / 2, 10, 0xFFAA00);
+        context.drawCenteredTextWithShadow(textRenderer, Text.literal("Coach").styled(s -> s.withBold(true)), width / 2, 10, 0xFFFFAA00);
 
         int top = textTop() - 4;
         int bottom = top + visibleLines() * 10 + 8;
         context.fill(x - 2, top, x + PANEL_WIDTH + 2, bottom, 0x90000000);
         int y = textTop();
         for (int i = scroll; i < lines.size() && i < scroll + visibleLines(); i++) {
-            context.drawTextWithShadow(textRenderer, lines.get(i), x + 2, y, 0xFFFFFF);
+            context.drawTextWithShadow(textRenderer, lines.get(i), x + 2, y, 0xFFFFFFFF);
             y += 10;
         }
-        context.drawTextWithShadow(textRenderer, Text.literal("NPC-API-KEY: " + state.keyStatus()), x, height - 20, 0xA0A0A0);
+        context.drawTextWithShadow(textRenderer, Text.literal("NPC-API-KEY: " + state.keyStatus()), x, height - 20, 0xFFA0A0A0);
     }
 
     @Override

@@ -17,6 +17,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.tag.DamageTypeTags;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
@@ -40,10 +41,10 @@ public class CoachNpcEntity extends PathAwareEntity {
 
     public static DefaultAttributeContainer.Builder createAttributes() {
         return MobEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 20)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.32)
-                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 1)
-                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 32);
+                .add(EntityAttributes.MAX_HEALTH, 20)
+                .add(EntityAttributes.MOVEMENT_SPEED, 0.32)
+                .add(EntityAttributes.ATTACK_DAMAGE, 1)
+                .add(EntityAttributes.FOLLOW_RANGE, 32);
     }
 
     @Override
@@ -83,16 +84,16 @@ public class CoachNpcEntity extends PathAwareEntity {
     }
 
     @Override
-    public boolean damage(DamageSource source, float amount) {
-        if (source.isIn(DamageTypeTags.BYPASSES_INVULNERABILITY)) return super.damage(source, amount);
-        if (getWorld().isClient || sparTarget == null || source.getAttacker() != sparTarget) return false;
+    public boolean damage(ServerWorld world, DamageSource source, float amount) {
+        if (source.isIn(DamageTypeTags.BYPASSES_INVULNERABILITY)) return super.damage(world, source, amount);
+        if (sparTarget == null || source.getAttacker() != sparTarget) return false;
         MatchManager matches = NpcCoachMod.matches();
         MatchManager.Match match = matches.byCoach(this);
         if (match == null || !match.isLive()) return false;
 
-        boolean blocked = isBlocking() && blockedByShield(source);
+        boolean blocked = isBlocking();
         match.recorder.onPlayerHitCoach(sparTarget, amount, blocked);
-        boolean hurt = super.damage(source, amount);
+        boolean hurt = super.damage(world, source, amount);
         if (getHealth() <= 1f) {
             setHealth(1f);
             matches.end(match, "WIN");
@@ -109,10 +110,10 @@ public class CoachNpcEntity extends PathAwareEntity {
     @Override
     protected ActionResult interactMob(PlayerEntity player, Hand hand) {
         if (hand != Hand.MAIN_HAND) return ActionResult.PASS;
-        if (getWorld().isClient) return ActionResult.SUCCESS;
+        if (!(getEntityWorld() instanceof ServerWorld world)) return ActionResult.SUCCESS;
         ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
         if (player.isSneaking() && player.getMainHandStack().isEmpty() && sparTarget == null) {
-            dropStack(new ItemStack(NpcCoachMod.COACH_SPAWN_EGG));
+            dropStack(world, new ItemStack(NpcCoachMod.COACH_SPAWN_EGG));
             discard();
             NpcCoachMod.say(serverPlayer, "See you next time!");
             return ActionResult.SUCCESS;

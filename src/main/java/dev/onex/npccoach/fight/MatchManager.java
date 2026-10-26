@@ -65,7 +65,7 @@ public final class MatchManager {
     public void tick(MinecraftServer server) {
         for (Match m : byPlayer.values().toArray(Match[]::new)) {
             if (m.player.isRemoved() || m.player.isDisconnected() || m.coach.isRemoved() || !m.coach.isAlive()
-                    || m.player.getWorld() != m.coach.getWorld() || m.player.squaredDistanceTo(m.coach) > MAX_DISTANCE_SQ) {
+                    || m.player.getEntityWorld() != m.coach.getEntityWorld() || m.player.squaredDistanceTo(m.coach) > MAX_DISTANCE_SQ) {
                 abort(m, "Fight cancelled.");
                 continue;
             }
@@ -113,7 +113,7 @@ public final class MatchManager {
         };
         player.networkHandler.sendPacket(new TitleS2CPacket(title));
         NpcCoachMod.say(player, "Good fight. Let me think about that one...");
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = player.getEntityWorld().getServer();
         NpcCoachMod.brain().analyze(player.getUuid(), summary).thenAccept(report -> server.execute(() -> deliver(player, report)));
     }
 

@@ -44,11 +44,11 @@ public final class FightRecorder {
 
     public void tick(ServerPlayerEntity player, LivingEntity coach) {
         ticks++;
-        Vec3d pos = player.getPos();
+        Vec3d pos = player.getEntityPos();
         distanceSum += Math.sqrt(player.squaredDistanceTo(coach));
         if (lastPos != null) {
             Vec3d delta = pos.subtract(lastPos);
-            Vec3d toCoach = coach.getPos().subtract(pos).multiply(1, 0, 1);
+            Vec3d toCoach = coach.getEntityPos().subtract(pos).multiply(1, 0, 1);
             if (toCoach.lengthSquared() > 1.0E-4) {
                 Vec3d dir = toCoach.normalize();
                 double lateral = Math.abs(delta.x * dir.z - delta.z * dir.x);

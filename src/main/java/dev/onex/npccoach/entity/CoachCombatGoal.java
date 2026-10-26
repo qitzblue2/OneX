@@ -64,7 +64,7 @@ public class CoachCombatGoal extends Goal {
                 shieldTicks = 0;
             }
             coach.swingHand(Hand.MAIN_HAND);
-            coach.tryAttack(target);
+            coach.tryAttack(target.getEntityWorld(), target);
             cooldown = drill.attackCooldown + random.nextInt(4);
             if (drill.retreatAfterHit) retreatTicks = 12 + random.nextInt(8);
         }

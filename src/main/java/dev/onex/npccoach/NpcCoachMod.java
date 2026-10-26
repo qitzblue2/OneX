@@ -27,6 +27,9 @@ import net.minecraft.item.ItemGroups;
 import net.minecraft.item.SpawnEggItem;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -44,9 +47,10 @@ public class NpcCoachMod implements ModInitializer {
     private static final double NEARBY = 16;
 
     public static final EntityType<CoachNpcEntity> COACH = Registry.register(Registries.ENTITY_TYPE, Identifier.of(MOD_ID, "coach"),
-            EntityType.Builder.create(CoachNpcEntity::new, SpawnGroup.MISC).dimensions(0.6f, 1.8f).maxTrackingRange(10).build("coach"));
+            EntityType.Builder.create(CoachNpcEntity::new, SpawnGroup.MISC).dimensions(0.6f, 1.8f).maxTrackingRange(10).build(RegistryKey.of(RegistryKeys.ENTITY_TYPE, Identifier.of(MOD_ID, "coach"))));
     public static final Item COACH_SPAWN_EGG = Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "coach_spawn_egg"),
-            new SpawnEggItem(COACH, 0x2B6CB0, 0xF6AD55, new Item.Settings()));
+            new SpawnEggItem(new Item.Settings().spawnEgg(COACH)
+                    .registryKey(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MOD_ID, "coach_spawn_egg")))));
 
     private static CoachConfig config;
     private static CoachBrain brain;
@@ -66,7 +70,7 @@ public class NpcCoachMod implements ModInitializer {
         PayloadTypeRegistry.playC2S().register(CoachActionC2S.ID, CoachActionC2S.CODEC);
         PayloadTypeRegistry.playS2C().register(CoachStateS2C.ID, CoachStateS2C.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(CoachActionC2S.ID, (payload, context) ->
-                context.player().server.execute(() -> handleAction(context.player(), payload)));
+                context.server().execute(() -> handleAction(context.player(), payload)));
 
         ServerTickEvents.END_SERVER_TICK.register(MATCHES::tick);
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> MATCHES.abortAll());
@@ -79,7 +83,7 @@ public class NpcCoachMod implements ModInitializer {
             MatchManager.Match m = MATCHES.get(player);
             if (m == null || source.getAttacker() != m.coach) return true;
             if (!m.isLive()) return false;
-            boolean blocked = player.isBlocking() && player.blockedByShield(source);
+            boolean blocked = player.isBlocking();
             m.recorder.onCoachHitPlayer(amount, blocked);
             if (!blocked && player.getHealth() - amount <= 1f) {
                 MATCHES.end(m, "LOSS");
@@ -109,7 +113,7 @@ public class NpcCoachMod implements ModInitializer {
                         .then(CommandManager.literal("ask").then(CommandManager.argument("question", StringArgumentType.greedyString())
                                 .executes(ctx -> run(ctx, "ask", StringArgumentType.getString(ctx, "question")))))
                         .then(CommandManager.literal("stop").executes(ctx -> run(ctx, "stop", "")))
-                        .then(CommandManager.literal("key").requires(src -> src.hasPermissionLevel(2))
+                        .then(CommandManager.literal("key").requires(CommandManager.requirePermissionLevel(CommandManager.GAMEMASTERS_CHECK))
                                 .then(CommandManager.argument("keys", StringArgumentType.greedyString())
                                         .executes(ctx -> run(ctx, "setkey", StringArgumentType.getString(ctx, "keys")))))
                         .then(CommandManager.literal("status").executes(ctx -> {
@@ -126,15 +130,17 @@ public class NpcCoachMod implements ModInitializer {
     }
 
     public static boolean canEditKey(ServerPlayerEntity player) {
-        return player.hasPermissionLevel(2) || player.server.isHost(player.getGameProfile());
+        MinecraftServer server = player.getEntityWorld().getServer();
+        return CommandManager.<ServerCommandSource>requirePermissionLevel(CommandManager.GAMEMASTERS_CHECK).test(player.getCommandSource())
+                || server.isHost(player.getPlayerConfigEntry());
     }
 
     private static CoachNpcEntity findCoach(ServerPlayerEntity player, int id) {
         if (id >= 0) {
-            Entity e = player.getServerWorld().getEntityById(id);
+            Entity e = player.getEntityWorld().getEntityById(id);
             if (e instanceof CoachNpcEntity coach && coach.isAlive() && coach.squaredDistanceTo(player) < NEARBY * NEARBY) return coach;
         }
-        return player.getServerWorld()
+        return player.getEntityWorld()
                 .getEntitiesByClass(CoachNpcEntity.class, player.getBoundingBox().expand(NEARBY), Entity::isAlive)
                 .stream().min(Comparator.comparingDouble(c -> c.squaredDistanceTo(player))).orElse(null);
     }
@@ -170,7 +176,7 @@ public class NpcCoachMod implements ModInitializer {
                     return;
                 }
                 player.sendMessage(Text.literal("You: " + question).formatted(Formatting.GRAY), false);
-                brain.ask(player.getUuid(), question).thenAccept(answer -> player.server.execute(() -> {
+                brain.ask(player.getUuid(), question).thenAccept(answer -> player.getEntityWorld().getServer().execute(() -> {
                     say(player, answer);
                     sendState(player, null, false);
                 }));
